@@ -8,7 +8,6 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/ethereum/go-ethereum/crypto"
-	"log"
 )
 
 func NewKey(mnemonic string) (*Key, error) {
@@ -31,7 +30,7 @@ func NewKey(mnemonic string) (*Key, error) {
 	if err != nil {
 		return nil, err
 	}
-	result.PrivateETH = result.privateBTC.ToECDSA()
+	result.privateETH = result.privateBTC.ToECDSA()
 	result.publicETH = result.publicBTC.ToECDSA()
 
 	return &result, nil
@@ -43,7 +42,7 @@ type Key struct {
 	privateBTC *btcec.PrivateKey
 	publicBTC  *btcec.PublicKey
 
-	PrivateETH *ecdsa.PrivateKey
+	privateETH *ecdsa.PrivateKey
 	publicETH  *ecdsa.PublicKey
 }
 
@@ -51,15 +50,6 @@ func (key *Key) WalletByBlockchain(blockchain string) (Wallet, error) {
 	if blockchain == "" {
 		return nil, errors.New("empty blockchain name")
 	}
-	child, err := key.extended.Child(0)
-	if err != nil {
-		return nil, err
-	}
-	pubKey, err := child.ECPubKey()
-	if err != nil {
-		return nil, err
-	}
-	log.Println(crypto.PubkeyToAddress(*pubKey.ToECDSA()).String())
 
 	switch Blockchain(blockchain) {
 	case BTC:
