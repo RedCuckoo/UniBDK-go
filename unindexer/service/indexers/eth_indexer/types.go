@@ -1,4 +1,4 @@
-package btc_indexer
+package eth_indexer
 
 import (
 	"encoding/json"
@@ -30,3 +30,32 @@ type jsonError struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
+
+//func (tx *Transaction) MarshalToFDB() []byte {
+//	return tuple.Tuple{
+//		int(proto.NamespaceFdb_BtcTransaction),
+//		tx.Hash,
+//		tx.Time,
+//		tx.Vin,
+//	}.Pack()
+//}
+//
+//func (tin *TransactionVIn) MarshalToFDB() []byte {
+//	return tuple.Tuple{
+//		tin.TxId,
+//		tin.Vout,
+//		tin.ScriptSig,
+//		tin.Sequence,
+//		tin.TxInWitness,
+//	}.Pack()
+//}
+//
+//func (tin *TransactionVIn) MarshalToFDB() []byte {
+//	return tuple.Tuple{
+//		tin.TxId,
+//		tin.Vout,
+//		tin.ScriptSig,
+//		tin.Sequence,
+//		tin.TxInWitness,
+//	}.Pack()
+//}

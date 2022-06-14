@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/RedCuckoo/UniBDK-go/proto/generated/proto"
 	"github.com/RedCuckoo/UniBDK-go/unindexer/fdbutils"
 	"github.com/apple/foundationdb/bindings/go/src/fdb"
 	"gitlab.com/distributed_lab/running"
@@ -16,7 +17,7 @@ import (
 func (s *Service) Run(ctx context.Context) {
 	s.log.Info("Running btc indexer service")
 
-	startBlock, err := s.FoundationDB.ReadLastBlock()
+	startBlock, err := s.FoundationDB.ReadLastBlock(proto.Blockchains_Bitcoin)
 	if err != nil {
 		panic("failed to read last btc block from db")
 	}

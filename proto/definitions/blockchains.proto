@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package unindexer.namespace;
+option go_package = "./;proto";
+
+
+enum Blockchains {
+  Bitcoin = 0;
+  Ethereum = 1;
+}
