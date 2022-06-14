@@ -9,13 +9,9 @@ import (
 	"github.com/apple/foundationdb/bindings/go/src/fdb"
 	"gitlab.com/distributed_lab/running"
 	"log"
+	"math"
 	"time"
 )
-
-type Address struct {
-	// txids
-	UnspentTransactions []string
-}
 
 func (s *Service) Run(ctx context.Context) {
 	s.log.Info("Running btc indexer service")
@@ -25,8 +21,6 @@ func (s *Service) Run(ctx context.Context) {
 		panic("failed to read last btc block from db")
 	}
 	s.StartBlock = startBlock
-
-	addresses := make(map[string]*Address)
 
 	running.WithBackOff(ctx, s.log, "new-checker-service", func(ctx context.Context) error {
 		if s.StartBlock == 0 {
@@ -63,11 +57,12 @@ func (s *Service) Run(ctx context.Context) {
 			}
 
 			_, err = s.FoundationDB.Transact(func(transaction fdb.Transaction) (interface{}, error) {
-				marshal, err := json.Marshal(transaction)
+				marshal, err := json.Marshal(tx)
 				if err != nil {
+					s.log.Error(err)
 					return nil, err
 				}
-				transaction.Set(fdb.Key(fdbutils.BtcTransactionKey(&tx.Result)), marshal)
+				transaction.Set(fdb.Key(fdbutils.BtcTransactionKey(txId)), marshal)
 				return nil, nil
 			})
 			if err != nil {
@@ -75,46 +70,55 @@ func (s *Service) Run(ctx context.Context) {
 				return err
 			}
 
-			var address string
+			log.Printf("transaction %s\n", tx.Result.TxId)
+			fee := 0.0
 
-			for _, out := range tx.Result.Vout {
-				switch out.ScriptPubKey.Type {
-				case "pubkeyhash", "scripthash", "witness_v0_keyhash", "witness_v0_scripthash":
-					address = out.ScriptPubKey.Address
-				case "nulldata":
-					continue
-				default:
-					return errors.New(fmt.Sprintf("unsupported address type %s", out.ScriptPubKey.Type))
-				}
-			}
-			if len(tx.Result.Vin) == 1 && tx.Result.Vin[0].Coinbase != "" {
-				if addresses[address] == nil {
-					addresses[address] = &Address{UnspentTransactions: []string{address}}
-				} else {
-					addresses[address].UnspentTransactions = append(addresses[address].UnspentTransactions, address)
-				}
-			} else {
-				log.Printf("transaction %s\n", tx.Result.TxId)
-
-				fee := 0.0
-				for _, vin := range tx.Result.Vin {
-					tx, err := s.GetRawTransaction(vin.TxId)
+			for _, vin := range tx.Result.Vin {
+				if vin.Coinbase == "" {
+					inTx, err := s.GetRawTransaction(vin.TxId)
+					fee += inTx.Result.Vout[vin.Vout].Value
 					if err != nil {
 						return err
 					}
-					log.Printf("\tfrom %s amount %.8f", tx.Result.Vout[vin.Vout].ScriptPubKey.Address, tx.Result.Vout[vin.Vout].Value)
-					fee += tx.Result.Vout[vin.Vout].Value
+					log.Printf("\tfrom %s amount %.8f", inTx.Result.Vout[vin.Vout].ScriptPubKey.Address, inTx.Result.Vout[vin.Vout].Value)
+
+					_, err = s.FoundationDB.Transact(func(transaction fdb.Transaction) (interface{}, error) {
+						transaction.Clear(fdb.Key(fdbutils.BtcAddressKey(inTx.Result.Vout[vin.Vout].ScriptPubKey.Address, vin.TxId)))
+						return nil, nil
+					})
+					if err != nil {
+						return err
+					}
+				} else {
+					fee += tx.Result.Vout[0].Value
+					if err != nil {
+						return err
+					}
+					log.Printf("\tminted %.8f", tx.Result.Vout[0].Value)
 				}
-
-				for _, vout := range tx.Result.Vout {
-					log.Printf("\tto %s amount %.8f", vout.ScriptPubKey.Address, vout.Value)
-					fee -= vout.Value
-				}
-
-				log.Printf("\tfee %.8f", fee)
-
-				log.Println()
 			}
+
+			for i, vout := range tx.Result.Vout {
+				fee -= vout.Value
+				switch vout.ScriptPubKey.Type {
+				case "pubkeyhash", "scripthash", "witness_v0_keyhash", "witness_v0_scripthash":
+					address := vout.ScriptPubKey.Address
+					log.Printf("\tto %s amount %.8f", address, tx.Result.Vout[i].Value)
+
+					_, err = s.FoundationDB.Transact(func(transaction fdb.Transaction) (interface{}, error) {
+						transaction.Set(fdb.Key(fdbutils.BtcAddressKey(address, txId)), fdbutils.EncodeUInt64(math.Float64bits(tx.Result.Vout[i].Value)))
+						return nil, nil
+					})
+				case "nulldata":
+					continue
+				default:
+					return errors.New(fmt.Sprintf("unsupported address type %s", vout.ScriptPubKey.Type))
+				}
+			}
+
+			log.Printf("\tfee %.8f", fee)
+
+			log.Println()
 
 		}
 

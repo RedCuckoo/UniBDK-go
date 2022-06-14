@@ -3,6 +3,8 @@ package btc_indexer
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/RedCuckoo/UniBDK-go/unindexer/fdbutils"
+	"github.com/apple/foundationdb/bindings/go/src/fdb"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -47,14 +49,28 @@ func (s *Service) GetBlockByHash(blockHash string) (GetBlockResponse, error) {
 	return result, nil
 }
 
-func (s *Service) GetRawTransaction(transactionHash string) (GetRawTransactionResponse, error) {
+func (s *Service) GetRawTransaction(txId string) (GetRawTransactionResponse, error) {
+	var response []byte
+	var err error
 	var result GetRawTransactionResponse
-	response, err := s.Request(&rpc.BatchElem{
-		Method: "getrawtransaction",
-		Args:   []interface{}{transactionHash, 2},
+
+	transactionResponse, err := s.FoundationDB.ReadTransact(func(transaction fdb.ReadTransaction) (interface{}, error) {
+		return transaction.Get(fdb.Key(fdbutils.BtcTransactionKey(txId))).Get()
 	})
 	if err != nil {
 		return GetRawTransactionResponse{}, err
+	}
+
+	if transactionResponse.([]byte) != nil {
+		response = transactionResponse.([]byte)
+	} else {
+		response, err = s.Request(&rpc.BatchElem{
+			Method: "getrawtransaction",
+			Args:   []interface{}{txId, 2},
+		})
+		if err != nil {
+			return GetRawTransactionResponse{}, err
+		}
 	}
 
 	err = json.Unmarshal(response, &result)
