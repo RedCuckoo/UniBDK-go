@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package unindexer.namespace;
+option go_package = "./;proto";
+
+
+enum NamespaceFdb {
+  BtcLastBlock = 0;
+  BtcTransaction = 1;
+//  BtcHolder
+
+}

@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package unindexer.namespace;
+option go_package = "./;proto";
+
+message Transaction{
+  bool InActiveChain = 1;
+  string Hex = 2;
+  string TxId = 3;
+  string Hash = 4;
+  int64 Size = 5;
+  int64 VSize = 6;
+  int64 Weight = 7;
+  int64 Version = 8;
+  int64 LockTime = 9;
+  string BlockHash = 10;
+  int64  Confirmations = 11;
+  int64 BlockTime = 12;
+  int64 Time = 13;
+  repeated TransactionVIn Vin = 14;
+  repeated TransactionVOut Vout = 15;
+}
+
+message TransactionVIn{
+  string TxId = 1;
+  int64  Vout = 2;
+  TxScriptSig ScriptSig = 3;
+  int64  Sequence = 4;
+  repeated string TxInWitness = 5;
+
+}
+message TxScriptSig{
+  string  Asm = 1;
+  string Hex = 2;
+}
+
+message TransactionVOut  {
+  double Value = 1;
+  int64 N = 2;
+  TransactionScriptPubKey ScriptPubKey = 3;
+}
+
+message TransactionScriptPubKey  {
+  string  Asm = 1;
+  string Hex = 2;
+  int64 ReqSigs = 3;
+  string Type = 4;
+  repeated string Addresses = 5;
+}
