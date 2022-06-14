@@ -1,0 +1,8 @@
+log:
+  level: info
+  disable_sentry: true
+
+listener:
+  addr: :3000
+
+
