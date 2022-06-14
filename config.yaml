@@ -5,4 +5,7 @@ log:
 listener:
   addr: :3000
 
+grpc-addresses:
+  btc: "localhost:1706"
+
 
