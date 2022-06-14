@@ -7,6 +7,6 @@ option go_package = "./;proto";
 enum NamespaceFdb {
   BtcLastBlock = 0;
   BtcTransaction = 1;
-//  BtcHolder
+  BtcAddress = 2;
 
 }

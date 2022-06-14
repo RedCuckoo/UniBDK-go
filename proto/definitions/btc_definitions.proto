@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package unindexer.namespace;
+package unindexer.btcdefinitions;
 option go_package = "./;proto";
 
 message Transaction{

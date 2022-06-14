@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package unindexer.btcindexer;
+option go_package = "./;proto";
+
+
+service BtcIndexer {
+  rpc AddressBalance (AddressBalanceRequest) returns (AddressBalanceReply);
+}
+
+message AddressBalanceRequest {
+  string address = 1;
+}
+
+message AddressBalanceReply {
+  float balance = 1;
+}
