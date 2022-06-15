@@ -3,7 +3,9 @@ package cli
 import (
 	"context"
 	"github.com/RedCuckoo/UniBDK-go/unindexer/config"
-	btc_indexer "github.com/RedCuckoo/UniBDK-go/unindexer/service/indexers/btc_indexer"
+	"github.com/RedCuckoo/UniBDK-go/unindexer/server"
+	"github.com/RedCuckoo/UniBDK-go/unindexer/service/indexers/btc_indexer"
+	"github.com/RedCuckoo/UniBDK-go/unindexer/service/indexers/eth_indexer"
 	"github.com/alecthomas/kingpin"
 	"github.com/sirupsen/logrus"
 
@@ -30,8 +32,7 @@ func Run(args []string) bool {
 	serviceCmd := runCmd.Command("indexer", "run indexer") // you can insert custom help
 
 	btcIndexer := serviceCmd.Command("btc", "run indexer btc")
-
-	// custom commands go here...
+	ethIndexer := serviceCmd.Command("eth", "run indexer eth")
 
 	cmd, err := app.Parse(args[1:])
 	if err != nil {
@@ -39,18 +40,16 @@ func Run(args []string) bool {
 		return false
 	}
 
-	//ctx := context.Background()
+	grpcServer := server.NewGrpcServer(cfg)
+	grpcServer.Start()
 
 	switch cmd {
 	case btcIndexer.FullCommand():
 		svc := btc_indexer.New(cfg)
 		svc.Run(context.Background())
-		//if err != nil {
-		//	return false
-		//}
-		//log.Info(hash)
-		//svc.Run(ctx)
-	// handle any custom commands here in the same way
+	case ethIndexer.FullCommand():
+		svc := eth_indexer.New(cfg)
+		svc.Run(context.Background())
 	default:
 		log.Errorf("unknown command %s", cmd)
 		return false

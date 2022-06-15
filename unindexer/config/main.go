@@ -11,6 +11,8 @@ type Config interface {
 
 	FDB() FDBConfig
 	BtcAuth() BtcAuthConfig
+	EthAuth() EthAuthConfig
+	GrpcAddresses() GrpcAddressesConfig
 }
 
 type config struct {
@@ -19,8 +21,10 @@ type config struct {
 	getter kv.Getter
 	once   comfig.Once
 
-	FDBConfig     FDBConfig
-	BtcAuthConfig BtcAuthConfig
+	FDBConfig           FDBConfig
+	BtcAuthConfig       BtcAuthConfig
+	EthAuthConfig       EthAuthConfig
+	GrpcAddressesConfig GrpcAddressesConfig
 }
 
 func New(getter kv.Getter) Config {
