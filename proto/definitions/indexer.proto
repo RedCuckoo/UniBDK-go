@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package unindexer.btcindexer;
+option go_package = "./;proto";
+
+
+enum Blockchains {
+  Bitcoin = 0;
+  Ethereum = 1;
+}
+
+service Indexer {
+  rpc AddressBalance (AddressBalanceRequest) returns (AddressBalanceReply);
+}
+
+message AddressBalanceRequest {
+  string address = 1;
+  Blockchains blockchain = 2;
+}
+
+message AddressBalanceReply {
+  string address =1;
+  string balance = 2;
+  repeated EthBalances  balances = 3;
+}
+
+message EthBalances {
+  string contractAddress = 1;
+  string balance = 2;
+}

@@ -9,4 +9,7 @@ enum NamespaceFdb {
   BtcTransaction = 1;
   BtcAddress = 2;
 
+  EthLastBlock = 3;
+  EthBalance = 4;
+  EthNativeBalance = 5;
 }
