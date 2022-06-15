@@ -16,7 +16,7 @@ type GrpcServer struct {
 	FoundationDB *fdbutils.FDB
 	addresses    config.GrpcAddressesConfig
 	server       *grpc.Server
-	proto.BtcIndexerServer
+	proto.IndexerServer
 }
 
 func NewGrpcServer(cfg config.Config) *GrpcServer {
@@ -41,7 +41,7 @@ func (server *GrpcServer) Start() {
 	}
 	server.server = grpc.NewServer()
 
-	proto.RegisterBtcIndexerServer(server.server, server)
+	proto.RegisterIndexerServer(server.server, server)
 
 	go func() {
 		server.log.Info("btcIndexer gRPC server is listening on address %s", server.addresses.BtcIndexerGrpc)
@@ -52,10 +52,5 @@ func (server *GrpcServer) Start() {
 }
 
 func (server *GrpcServer) AddressBalance(ctx context.Context, request *proto.AddressBalanceRequest) (*proto.AddressBalanceReply, error) {
-	balance, err := server.FoundationDB.GetAddressBalance(request.Address)
-	if err != nil {
-		return nil, err
-	}
-
-	return &proto.AddressBalanceReply{Balance: balance}, nil
+	return server.FoundationDB.GetAddressBalance(ctx, request)
 }

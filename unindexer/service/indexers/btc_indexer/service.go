@@ -23,7 +23,7 @@ func (s *Service) Run(ctx context.Context) {
 	}
 	s.StartBlock = startBlock
 
-	running.WithBackOff(ctx, s.log, "new-checker-service", func(ctx context.Context) error {
+	running.WithBackOff(ctx, s.log, "btc-indexer-service", func(ctx context.Context) error {
 		if s.StartBlock == 0 {
 			s.StartBlock = 2055584
 		}

@@ -3,7 +3,6 @@ module github.com/RedCuckoo/UniBDK-go
 go 1.18
 
 require (
-	github.com/Ankr-network/ankrscan-proto-contract v0.0.0-20220610152306-72c0cc2ae080
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/apple/foundationdb/bindings/go v0.0.0-20210106210919-a461b9c93be1
 	github.com/btcsuite/btcd v0.20.1-beta
@@ -36,14 +35,16 @@ require (
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-cmp v0.5.7 // indirect
+	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rjeczalik/notify v0.9.1 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cast v1.3.0 // indirect

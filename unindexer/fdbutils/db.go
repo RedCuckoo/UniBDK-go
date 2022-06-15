@@ -11,6 +11,7 @@ import (
 
 type FDB struct {
 	fdb.Database
+	cfg config.Config
 }
 
 func Connect(config config.Config) (*FDB, error) {
@@ -25,7 +26,10 @@ func Connect(config config.Config) (*FDB, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open database")
 	}
-	db := &FDB{database}
+	db := &FDB{
+		Database: database,
+		cfg:      config,
+	}
 	if err = db.healthCheck(time.Second * 5); err != nil {
 		return nil, errors.Wrapf(err, "health check failed")
 	}

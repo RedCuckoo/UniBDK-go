@@ -1,9 +1,13 @@
 package fdbutils
 
 import (
+	"context"
+	"fmt"
 	"github.com/RedCuckoo/UniBDK-go/proto/generated/proto"
 	"github.com/apple/foundationdb/bindings/go/src/fdb"
+	"github.com/ethereum/go-ethereum/common"
 	"math"
+	"math/big"
 )
 
 func (db *FDB) ReadLastBlock(blockchain proto.Blockchains) (int64, error) {
@@ -38,25 +42,62 @@ func (db *FDB) ReadLastBlock(blockchain proto.Blockchains) (int64, error) {
 	return blockNumber.(int64), err
 }
 
-func (db *FDB) GetAddressBalance(address string) (float32, error) {
-	balance, err := db.ReadTransact(func(transaction fdb.ReadTransaction) (interface{}, error) {
-		prefixRange, err := fdb.PrefixRange(BtcAddressKeyPrefix(address))
-		if err != nil {
-			return nil, err
+func (db *FDB) GetAddressBalance(ctx context.Context, request *proto.AddressBalanceRequest) (*proto.AddressBalanceReply, error) {
+	reply, err := db.ReadTransact(func(transaction fdb.ReadTransaction) (interface{}, error) {
+		var prefixRange fdb.KeyRange
+		var err error
+		balances := make([]*proto.EthBalances, 0)
+		balance := float32(0.0)
+		var resbalance string
+		var address string
+		switch request.Blockchain {
+		case proto.Blockchains_Bitcoin:
+			address = request.Address
+			prefixRange, err = fdb.PrefixRange(BtcAddressKeyPrefix(request.Address))
+			if err != nil {
+				return nil, err
+			}
+			it := transaction.GetRange(prefixRange, fdb.RangeOptions{}).Iterator()
+
+			for it.Advance() {
+				balance += float32(math.Float64frombits(DecodeUInt64(it.MustGet().Value)))
+			}
+		case proto.Blockchains_Ethereum:
+			address = common.HexToAddress(request.Address).String()
+			prefixRange, err = fdb.PrefixRange(EthBalanceKeyPrefix(common.HexToAddress(request.Address)))
+			if err != nil {
+				return nil, err
+			}
+			ethBalance, err := db.cfg.EthAuth().EthClient.BalanceAt(ctx, common.HexToAddress(request.Address), nil)
+			if err != nil {
+				return nil, err
+			}
+			resbalance = ethBalance.String()
+			it := transaction.GetRange(prefixRange, fdb.RangeOptions{}).Iterator()
+			for it.Advance() {
+				keyValue := it.MustGet()
+				contractAddress := EthBalanceKeyGetContractAddress(keyValue.Key)
+				balances = append(balances, &proto.EthBalances{
+					ContractAddress: contractAddress.String(),
+					Balance:         new(big.Int).SetBytes(keyValue.Value).String(),
+				})
+			}
 		}
-		it := transaction.GetRange(prefixRange, fdb.RangeOptions{}).Iterator()
 
-		balance := 0.0
-
-		for it.Advance() {
-			balance += math.Float64frombits(DecodeUInt64(it.MustGet().Value))
+		switch request.Blockchain {
+		case proto.Blockchains_Bitcoin:
+			resbalance = fmt.Sprintf("%.8f", balance)
 		}
 
-		return balance, nil
+		return &proto.AddressBalanceReply{
+			Address:  address,
+			Balance:  resbalance,
+			Balances: balances,
+		}, nil
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return float32(balance.(float64)), nil
+	return reply.(*proto.AddressBalanceReply), nil
 }
